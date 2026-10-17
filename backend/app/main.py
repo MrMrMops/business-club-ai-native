@@ -1,35 +1,35 @@
 from fastapi import FastAPI
-from sqlalchemy import text
-
-from app.api.auth import router as auth_router
-from app.api.users import router as users_router
-from app.api.publications import router as publications_router
-from app.api.applications import router as applications_router
-from app.db.session import engine
-
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api import applications, auth, publications, users
+from app.core.config import settings
 
-app = FastAPI(
-    title="Business Club Startups API",
-    version="0.1.0",
-)
+
+app = FastAPI(title="Business Club API")
+
+
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+if settings.frontend_url not in origins:
+    origins.append(settings.frontend_url)
+
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(auth_router)
-app.include_router(users_router)
-app.include_router(publications_router)
-app.include_router(applications_router)
+
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(publications.router)
+app.include_router(applications.router)
 
 
 @app.get("/health")
