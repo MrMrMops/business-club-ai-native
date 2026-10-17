@@ -1,0 +1,134 @@
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.api.dependencies import get_current_user
+from app.db.dependencies import get_db
+from app.models.publication import (
+    Publication,
+    PublicationStatus,
+    PublicationType,
+)
+from app.models.user import User
+from app.schemas.publication import (
+    PublicationCreate,
+    PublicationResponse,
+    PublicationUpdate,
+)
+
+
+router = APIRouter(
+    prefix="/publications",
+    tags=["publications"],
+)
+
+
+@router.get(
+    "",
+    response_model=List[PublicationResponse],
+)
+def get_publications(
+    publication_type: Optional[PublicationType] = None,
+    db: Session = Depends(get_db),
+):
+    query = (
+        select(Publication)
+        .where(Publication.status == PublicationStatus.ACTIVE)
+        .order_by(Publication.created_at.desc())
+    )
+
+    if publication_type is not None:
+        query = query.where(
+            Publication.type == publication_type
+        )
+
+    return list(db.scalars(query).all())
+
+
+@router.get(
+    "/{publication_id}",
+    response_model=PublicationResponse,
+)
+def get_publication(
+    publication_id: int,
+    db: Session = Depends(get_db),
+):
+    publication = db.get(
+        Publication,
+        publication_id,
+    )
+
+    if publication is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Publication not found",
+        )
+
+    return publication
+
+
+@router.post(
+    "",
+    response_model=PublicationResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_publication(
+    data: PublicationCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    publication = Publication(
+        author_id=current_user.id,
+        type=data.type,
+        title=data.title,
+        description=data.description,
+        looking_for=data.looking_for,
+    )
+
+    db.add(publication)
+    db.commit()
+    db.refresh(publication)
+
+    return publication
+
+
+@router.patch(
+    "/{publication_id}",
+    response_model=PublicationResponse,
+)
+def update_publication(
+    publication_id: int,
+    data: PublicationUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    publication = db.get(
+        Publication,
+        publication_id,
+    )
+
+    if publication is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Publication not found",
+        )
+
+    if publication.author_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot edit this publication",
+        )
+
+    update_data = data.model_dump(
+        exclude_unset=True
+    )
+
+    for field, value in update_data.items():
+        setattr(publication, field, value)
+
+    db.commit()
+    db.refresh(publication)
+
+    return publication
