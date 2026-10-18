@@ -10,13 +10,8 @@ import { apiRequest } from "../api";
 export function LoginPage() {
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState(
-    "nikita@example.com",
-  );
-
-  const [password, setPassword] = useState(
-    "password123",
-  );
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -92,6 +87,8 @@ export function LoginPage() {
               onChange={(event) =>
                 setEmail(event.target.value)
               }
+              placeholder="Введите email"
+              autoComplete="email"
               className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-indigo-500"
               required
             />
@@ -108,6 +105,8 @@ export function LoginPage() {
               onChange={(event) =>
                 setPassword(event.target.value)
               }
+              placeholder="Введите пароль"
+              autoComplete="current-password"
               className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-indigo-500"
               required
             />
