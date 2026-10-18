@@ -2,18 +2,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-
-    frontend_url: str = "http://localhost:5173"
-    database_url: str = (
-        "postgresql+psycopg://postgres:postgres@localhost:5432/business_club"
-    )
-
-    secret_key: str = (
-        "dev-secret-key-change-in-production"
-    )
+    database_url: str
+    secret_key: str
 
     algorithm: str = "HS256"
-
     access_token_expire_minutes: int = 60
 
     frontend_url: str = "http://localhost:5173"

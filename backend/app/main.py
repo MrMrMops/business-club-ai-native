@@ -4,6 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import applications, auth, publications, users
 from app.core.config import settings
 
+from sqlalchemy import text
+from app.db.session import engine
 
 app = FastAPI(title="Business Club API")
 
