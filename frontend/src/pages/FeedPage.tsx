@@ -23,6 +23,7 @@ type PublicationType =
 type Publication = {
   id: number;
   author_id: number;
+  author_name: string;
   type: PublicationType;
   title: string;
   description: string;
@@ -350,10 +351,7 @@ export function FeedPage() {
 
                 <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
                   <span className="text-sm text-slate-500">
-                    {publication.author_id ===
-                    user?.id
-                      ? "Ваша публикация"
-                      : `Участник #${publication.author_id}`}
+                    Автор: {publication.author_name}
                   </span>
 
                   <Link

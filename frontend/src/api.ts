@@ -37,5 +37,9 @@ export async function apiRequest(
     );
   }
 
+  if (response.status === 204) {
+    return;
+  }
+
   return response.json();
 }

@@ -3,9 +3,10 @@ from enum import Enum
 
 from sqlalchemy import DateTime, ForeignKey, String, Text, func
 from sqlalchemy import Enum as SqlEnum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.models.user import User
 
 
 class PublicationType(str, Enum):
@@ -20,6 +21,12 @@ class PublicationStatus(str, Enum):
 
 class Publication(Base):
     __tablename__ = "publications"
+
+    author: Mapped[User] = relationship(lazy="joined")
+
+    @property
+    def author_name(self) -> str:
+        return self.author.name
 
     id: Mapped[int] = mapped_column(
         primary_key=True,

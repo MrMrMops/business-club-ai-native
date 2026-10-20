@@ -22,6 +22,7 @@ type User = {
 type Publication = {
   id: number;
   author_id: number;
+  author_name: string;
   type: "startup" | "vacancy";
   title: string;
   description: string;
@@ -251,9 +252,7 @@ export function PublicationPage() {
           </h1>
 
           <div className="mt-3 text-sm text-slate-500">
-            {isOwner
-              ? "Ваша публикация"
-              : `Автор: участник #${publication.author_id}`}
+            Автор: {publication.author_name}
           </div>
 
           <div className="mt-8">

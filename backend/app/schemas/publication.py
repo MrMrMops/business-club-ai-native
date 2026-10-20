@@ -36,6 +36,7 @@ class PublicationUpdate(BaseModel):
 class PublicationResponse(BaseModel):
     id: int
     author_id: int
+    author_name: str
     type: PublicationType
     title: str
     description: str

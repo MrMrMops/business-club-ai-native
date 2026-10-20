@@ -113,6 +113,9 @@ export function ProfilePage() {
   const [editing, setEditing] =
     useState(false);
 
+  const [deletingPublicationId, setDeletingPublicationId] =
+    useState<number | null>(null);
+
 
   const loadData =
     useCallback(async () => {
@@ -376,6 +379,44 @@ export function ProfilePage() {
       );
     } finally {
       setEditing(false);
+    }
+  }
+
+
+  async function deletePublication(
+    publication: Publication,
+  ) {
+    const confirmed = window.confirm(
+      `Удалить публикацию «${publication.title}» и все связанные отклики? Это действие нельзя отменить.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingPublicationId(publication.id);
+    setError("");
+    setSuccess("");
+
+    try {
+      await apiRequest(
+        `/publications/${publication.id}`,
+        { method: "DELETE" },
+      );
+
+      setSuccess(
+        "Публикация и связанные отклики удалены",
+      );
+
+      await loadData();
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Не удалось удалить публикацию",
+      );
+    } finally {
+      setDeletingPublicationId(null);
     }
   }
 
@@ -683,6 +724,24 @@ export function ProfilePage() {
                           Открыть снова
                         </button>
                       )}
+
+                      <button
+                        onClick={() =>
+                          deletePublication(
+                            publication,
+                          )
+                        }
+                        disabled={
+                          deletingPublicationId ===
+                          publication.id
+                        }
+                        className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {deletingPublicationId ===
+                        publication.id
+                          ? "Удаляем..."
+                          : "Удалить"}
+                      </button>
                     </div>
                   </div>
                 </article>
