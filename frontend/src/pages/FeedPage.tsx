@@ -7,6 +7,7 @@ import {
 
 import { apiRequest } from "../api";
 import { Link } from "react-router-dom";
+import { Recommendations } from "./Recommendations";
 
 type User = {
   id: number;
@@ -237,6 +238,8 @@ export function FeedPage() {
             + Создать публикацию
           </button>
         </div>
+
+        <Recommendations skills={user?.skills} />
 
         <div className="mt-8 flex gap-2 overflow-x-auto pb-2">
           <FilterButton

@@ -17,7 +17,9 @@ from app.schemas.publication import (
     PublicationCreate,
     PublicationResponse,
     PublicationUpdate,
+    RecommendedPublicationResponse,
 )
+from app.services.matching import extract_skills, matched_skills
 
 
 router = APIRouter(
@@ -46,6 +48,36 @@ def get_publications(
         )
 
     return list(db.scalars(query).all())
+
+
+@router.get("/recommended", response_model=List[RecommendedPublicationResponse])
+def get_recommended_publications(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    skills = extract_skills(current_user.skills)
+    if not skills:
+        return []
+
+    candidates = db.scalars(
+        select(Publication).where(
+            Publication.status == PublicationStatus.ACTIVE,
+            Publication.author_id != current_user.id,
+        ).order_by(Publication.created_at.desc(), Publication.id.desc())
+    ).all()
+    ranked = []
+    for publication in candidates:
+        matches = matched_skills(skills, publication.looking_for)
+        if matches:
+            ranked.append(RecommendedPublicationResponse(
+                **PublicationResponse.model_validate(publication).model_dump(),
+                matched_skills=matches,
+                explanation='В вашем профиле и требованиях публикации совпадают навыки: '
+                + ', '.join(matches) + '.',
+            ))
+    # Stable sort preserves newest-first ordering for equal distinct skill counts.
+    ranked.sort(key=lambda item: len(item.matched_skills), reverse=True)
+    return ranked[:3]
 
 
 @router.get(

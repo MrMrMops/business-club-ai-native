@@ -46,3 +46,8 @@ class PublicationResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class RecommendedPublicationResponse(PublicationResponse):
+    matched_skills: list[str]
+    explanation: str
