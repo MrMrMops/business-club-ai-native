@@ -274,7 +274,12 @@ def test_author_deletes_publication_and_its_applications(
     assert client.get(
         "/applications/received",
         headers=auth_headers(nikita_token),
-    ).json() == [other_application.json()]
+    ).json() == [{
+        **other_application.json(),
+        "applicant_name": "Polina",
+        "matched_skills": [],
+        "explanation": "Кандидат пока не указал навыки",
+    }]
     assert client.get(f"/publications/{other_id}").status_code == 200
     assert client.get("/users/me", headers=auth_headers(nikita_token)).status_code == 200
     assert client.get("/users/me", headers=auth_headers(polina_token)).status_code == 200

@@ -45,6 +45,12 @@ type Application = {
   updated_at: string;
 };
 
+type IncomingApplication = Application & {
+  applicant_name: string;
+  matched_skills: string[];
+  explanation: string;
+};
+
 type Tab =
   | "profile"
   | "publications"
@@ -66,7 +72,7 @@ export function ProfilePage() {
     useState<Application[]>([]);
 
   const [received, setReceived] =
-    useState<Application[]>([]);
+    useState<IncomingApplication[]>([]);
 
   const [publicationTitles, setPublicationTitles] =
     useState<Record<number, string>>({});
@@ -810,10 +816,7 @@ export function ProfilePage() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <div className="text-sm text-slate-400">
-                        Участник #
-                        {
-                          application.applicant_id
-                        }
+                        Кандидат: {application.applicant_name}
                       </div>
 
                       <h2 className="mt-1 text-lg font-bold text-slate-900">
@@ -842,6 +845,32 @@ export function ProfilePage() {
                   >
                     Открыть публикацию →
                   </Link>
+
+                  <section className="mt-5 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4 sm:p-5">
+                    <h3 className="text-sm font-bold text-slate-900">
+                      Соответствие навыков
+                    </h3>
+                    {application.matched_skills.length > 0 && (
+                      <>
+                        <ul className="mt-3 flex flex-wrap gap-2" aria-label="Совпавшие навыки">
+                          {application.matched_skills.map((skill) => (
+                            <li key={skill} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-100">
+                              {skill}
+                            </li>
+                          ))}
+                        </ul>
+                        <h4 className="mt-4 text-sm font-semibold text-slate-800">
+                          Почему кандидат подходит
+                        </h4>
+                      </>
+                    )}
+                    <p className="mt-2 break-words text-sm leading-6 text-slate-600">
+                      {application.explanation}
+                    </p>
+                    <p className="mt-3 text-xs leading-5 text-slate-500">
+                      Подсказка по указанным навыкам, не оценка кандидата. Решение принимаете вы.
+                    </p>
+                  </section>
 
                   {application.status ===
                     "pending" && (

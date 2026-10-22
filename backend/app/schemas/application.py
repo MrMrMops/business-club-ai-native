@@ -22,3 +22,9 @@ class ApplicationResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class IncomingApplicationResponse(ApplicationResponse):
+    applicant_name: str
+    matched_skills: list[str]
+    explanation: str

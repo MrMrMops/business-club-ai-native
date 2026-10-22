@@ -18,7 +18,9 @@ from app.models.user import User
 from app.schemas.application import (
     ApplicationCreate,
     ApplicationResponse,
+    IncomingApplicationResponse,
 )
+from app.services.matching import extract_skills, matched_skills
 
 
 router = APIRouter(
@@ -107,25 +109,47 @@ def get_sent_applications(
 
 @router.get(
     "/applications/received",
-    response_model=List[ApplicationResponse],
+    response_model=List[IncomingApplicationResponse],
 )
 def get_received_applications(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     query = (
-        select(Application)
+        select(Application, User.name, User.skills, Publication.looking_for)
         .join(
             Publication,
             Application.publication_id == Publication.id,
         )
+        .join(User, Application.applicant_id == User.id)
         .where(
             Publication.author_id == current_user.id
         )
         .order_by(Application.created_at.desc())
     )
 
-    return list(db.scalars(query).all())
+    results = []
+    for application, name, skills, requirements in db.execute(query).all():
+        matches = matched_skills(extract_skills(skills), requirements)
+        if not (skills or "").strip():
+            explanation = "Кандидат пока не указал навыки"
+        elif matches:
+            explanation = (
+                "В навыках кандидата и требованиях публикации совпадают: "
+                + ", ".join(matches) + ". Обсудите опыт и задачи с кандидатом."
+            )
+        else:
+            explanation = (
+                "Совпадений по словарю навыков пока нет. Это не означает, "
+                "что кандидат не подходит: изучите отклик и обсудите его опыт."
+            )
+        results.append(IncomingApplicationResponse(
+            **ApplicationResponse.model_validate(application).model_dump(),
+            applicant_name=name,
+            matched_skills=matches,
+            explanation=explanation,
+        ))
+    return results
 
 
 @router.patch(
