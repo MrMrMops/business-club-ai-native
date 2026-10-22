@@ -8,6 +8,7 @@ import {
 import { Link } from "react-router-dom";
 
 import { apiRequest } from "../api";
+import { TeamReadiness } from "./TeamReadiness";
 
 
 type User = {
@@ -683,6 +684,11 @@ export function ProfilePage() {
                           publication.looking_for
                         }
                       </div>
+                      <TeamReadiness
+                        key={`${publication.id}:${publication.looking_for}`}
+                        publicationId={publication.id}
+                        requirements={publication.looking_for}
+                      />
                     </div>
 
                     <div className="flex flex-wrap gap-2">

@@ -51,3 +51,12 @@ class PublicationResponse(BaseModel):
 class RecommendedPublicationResponse(PublicationResponse):
     matched_skills: list[str]
     explanation: str
+
+
+class TeamReadinessResponse(BaseModel):
+    accepted_count: int
+    required_skills: list[str]
+    covered_skills: list[str]
+    missing_skills: list[str]
+    recommendation: str
+    limitation: str

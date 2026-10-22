@@ -11,13 +11,14 @@ from app.models.publication import (
     PublicationStatus,
     PublicationType,
 )
-from app.models.application import Application
+from app.models.application import Application, ApplicationStatus
 from app.models.user import User
 from app.schemas.publication import (
     PublicationCreate,
     PublicationResponse,
     PublicationUpdate,
     RecommendedPublicationResponse,
+    TeamReadinessResponse,
 )
 from app.services.matching import extract_skills, matched_skills
 
@@ -100,6 +101,46 @@ def get_publication(
         )
 
     return publication
+
+
+@router.get("/{publication_id}/team-readiness", response_model=TeamReadinessResponse)
+def get_team_readiness(
+    publication_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    publication = db.get(Publication, publication_id)
+    if publication is None:
+        raise HTTPException(status_code=404, detail="Publication not found")
+    if publication.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the author can view team readiness")
+
+    profiles = db.scalars(
+        select(User.skills).join(Application, Application.applicant_id == User.id).where(
+            Application.publication_id == publication_id,
+            Application.status == ApplicationStatus.ACCEPTED,
+        )
+    ).all()
+    requirements = extract_skills(publication.looking_for)
+    team_skills = set()
+    for profile in profiles:
+        team_skills.update(extract_skills(profile))
+    covered = matched_skills(team_skills, publication.looking_for)
+    missing = sorted(requirements - set(covered), key=str.casefold)
+    if not requirements:
+        recommendation = "Требования не распознаны. Уточните компетенции в поле «Ищем» и обсудите состав команды вручную."
+    elif missing:
+        recommendation = "Ищите участников с навыками: " + ", ".join(missing) + "."
+    else:
+        recommendation = "Все распознанные требования покрыты. Обсудите опыт участников и требования вне словаря."
+    return TeamReadinessResponse(
+        accepted_count=len(profiles),
+        required_skills=sorted(requirements, key=str.casefold),
+        covered_skills=covered,
+        missing_skills=missing,
+        recommendation=recommendation,
+        limitation="Учтены только распознанные словарём навыки принятых участников, без автора. Нераспознанные требования, опыт и доступность не оцениваются; это не гарантия готовности команды.",
+    )
 
 
 @router.post(
