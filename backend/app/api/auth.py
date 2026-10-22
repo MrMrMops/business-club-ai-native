@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.api.passwords import router as password_router
+
 from app.core.security import (
     create_access_token,
     hash_password,
@@ -21,6 +23,7 @@ router = APIRouter(
     prefix="/auth",
     tags=["auth"],
 )
+router.include_router(password_router)
 
 
 @router.post(
